@@ -1,0 +1,67 @@
+# SentimentGulf — Arabic-English Sentiment Analysis
+# 3-class: negative (0), neutral (1), positive (2)
+# Gulf Arabic–English code-switched social media text
+
+data:
+  master_dataset_path: "data/processed/master_dataset.csv"
+  code_switched_path: "data/processed/code_switched_only.csv"
+  gold_test_path: "data/processed/gold_test_set.csv"
+  label_map:
+    negative: 0
+    neutral: 1
+    positive: 2
+  id_to_label:
+    0: "negative"
+    1: "neutral"
+    2: "positive"
+  num_labels: 3
+  random_seed: 42
+  max_sequence_length: 128
+
+models:
+  xlm_roberta:
+    hf_name: "xlm-roberta-base"
+    hidden_size: 768
+    num_hidden_layers: 12
+    dropout: 0.3
+  marbert:
+    hf_name: "UBC-NLP/MARBERTv2"
+    hidden_size: 768
+    num_hidden_layers: 12
+    dropout: 0.3
+
+training:
+  batch_size: 16
+  max_epochs: 10
+  early_stopping_patience: 3
+  gradient_clip_max_norm: 1.0
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  full_finetuning:
+    learning_rate: 2.0e-5
+  lora:
+    learning_rate: 3.0e-4
+    rank: 8
+    alpha: 16.0
+    dropout: 0.1
+    target_modules: ["query", "key", "value", "dense"]
+
+augmentation:
+  back_translation_enabled: true
+  source_lang: "ar"
+  pivot_lang: "en"
+  target_minority_classes: ["neutral"]
+  max_augmented_samples: 5000
+  quality_threshold: 0.6
+
+evaluation:
+  primary_metric: "macro_f1"
+  compute_bleu: true
+  css_confidence_threshold: 0.80
+  css_n_samples: 150
+
+deployment:
+  port: 8000
+  max_batch_size: 32
+  max_text_length: 512
+  best_model_path: "models/checkpoints/best_model"
