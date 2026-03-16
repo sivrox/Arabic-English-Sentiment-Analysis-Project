@@ -1,8 +1,11 @@
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
 import pandas as pd
 import time
+import os
 
-API_KEY = "AIzaSyBaFM-36zxSRnmwnycFPPbNGZszBWg2YIk"
+load_dotenv()
+API_KEY = os.getenv("YOUTUBE_API_KEY")
 youtube = build("youtube", "v3", developerKey=API_KEY)
 
 # UAE-focused channels and videos that get Gulf Arabic + English comments
