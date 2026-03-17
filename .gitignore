@@ -1,5 +1,11 @@
 
+# Ignore model weights
 *.pt
 *.bin
-best_* 
+best_*/
+
+# Ignore system files
+__pycache__/
+*.pyc
+.env
 drive/
