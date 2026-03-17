@@ -1,0 +1,43 @@
+SentimentGulf — Dataset Build Report
+==================================================
+
+Total rows: 213,255
+
+Label distribution:
+label
+positive    82108
+neutral     77181
+negative    53966
+
+Text type distribution:
+text_type
+code_switched    163199
+pure_arabic       50056
+
+Source distribution:
+source
+are_cstd_msa_train      66834
+are_cstd_saudi_train    60118
+company_reviews         31888
+arbml_twitter           29049
+magedsaeed_cs            8470
+are_cstd_msa_test        6350
+are_cstd_saudi_test      6148
+youtube_scrape           2450
+appstore_scrape          1888
+reddit_gulf                60
+
+Split distribution:
+split
+train                149957
+test                  31743
+val                   29105
+gold_test_pending      2450
+
+Label source distribution:
+label_source
+weak_lexicon_synthetic                  139450
+manual                                   60937
+weak_lexicon                              8530
+weak_lexicon_NEEDS_MANUAL_ANNOTATION      2450
+weak_stars                                1888
