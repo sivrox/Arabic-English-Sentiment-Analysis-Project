@@ -27,9 +27,9 @@ import numpy as np
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
 
-ROOT      = Path(__file__).resolve().parent
-RAW       = ROOT / "datasets" / "raw"
-PROCESSED = ROOT / "datasets" / "processed"
+ROOT = Path(__file__).resolve().parent
+RAW = ROOT / "preprocessing" / "datasets" / "raw"
+PROCESSED = ROOT / "preprocessing" / "datasets" / "processed"
 PROCESSED.mkdir(parents=True, exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ def load_astd() -> pd.DataFrame:
     log.info("Loading ASTD Tweets.txt...")
     path = RAW / "Tweets.txt"
     if not path.exists():
-        log.warning("  NOT FOUND"); return pd.DataFrame()
+        log.warning("NOT FOUND"); return pd.DataFrame()
     rows = []
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -154,8 +154,8 @@ def load_astd() -> pd.DataFrame:
             if len(parts) == 2:
                 rows.append({"text": parts[1].strip(), "raw_label": parts[0].strip()})
     df = pd.DataFrame(rows)
-    df["label"]        = df["raw_label"].apply(normalize_label)
-    df["source"]       = "astd_tweets"
+    df["label"] = df["raw_label"].apply(normalize_label)
+    df["source"] = "astd_tweets"
     df["label_source"] = "manual"
     log.info("  %d rows", len(df))
     return df[["text", "label", "source", "label_source"]]
@@ -165,20 +165,20 @@ def load_arbml() -> pd.DataFrame:
     log.info("Loading arbml parquet...")
     path = _find("arbml*.parquet") or _find("Arabic_Sentiment*.parquet")
     if not path:
-        log.warning("  NOT FOUND"); return pd.DataFrame()
+        log.warning("NOT FOUND"); return pd.DataFrame()
     df = pd.read_parquet(path)
-    log.info("  %d rows | columns: %s", len(df), list(df.columns))
+    log.info("%d rows | columns: %s", len(df), list(df.columns))
     text_col  = _detect_text_col(df)
     label_col = _detect_label_col(df)
     if label_col:
         out = df[[text_col, label_col]].copy()
         out.columns = ["text", "raw_label"]
-        out["label"]        = out["raw_label"].apply(normalize_label)
+        out["label"] = out["raw_label"].apply(normalize_label)
         out["label_source"] = "manual"
     else:
         out = df[[text_col]].copy()
         out.columns = ["text"]
-        out["label"]        = out["text"].apply(lexicon_label)
+        out["label"] = out["text"].apply(lexicon_label)
         out["label_source"] = "weak_lexicon"
     out["source"] = "arbml_twitter"
     log.info("  %d rows loaded", len(out))
@@ -189,13 +189,13 @@ def load_magedsaeed() -> pd.DataFrame:
     log.info("Loading MagedSaeed parquet...")
     path = _find("MagedSaeed*.parquet") or _find("arabic-english*.parquet")
     if not path:
-        log.warning("  NOT FOUND"); return pd.DataFrame()
+        log.warning("NOT FOUND"); return pd.DataFrame()
     df = pd.read_parquet(path)
     log.info("  %d rows | columns: %s", len(df), list(df.columns))
     out = df[[df.columns[0]]].copy()
     out.columns = ["text"]
-    out["label"]        = out["text"].apply(lexicon_label)
-    out["source"]       = "magedsaeed_cs"
+    out["label"] = out["text"].apply(lexicon_label)
+    out["source"] = "magedsaeed_cs"
     out["label_source"] = "weak_lexicon"
     log.info("  %d rows loaded", len(out))
     return out[["text", "label", "source", "label_source"]]
@@ -210,8 +210,8 @@ def load_company_reviews() -> pd.DataFrame:
     log.info("  %d rows", len(df))
     out = df[["review_description", "rating"]].copy()
     out.columns = ["text", "raw_label"]
-    out["label"]        = out["raw_label"].apply(normalize_label)
-    out["source"]       = "company_reviews"
+    out["label"] = out["raw_label"].apply(normalize_label)
+    out["source"] = "company_reviews"
     out["label_source"] = "manual"
     return out[["text", "label", "source", "label_source"]]
 
@@ -223,18 +223,18 @@ def load_appstore() -> pd.DataFrame:
         log.warning("  NOT FOUND"); return pd.DataFrame()
     df = pd.read_csv(path, encoding="utf-8-sig")
     log.info("  %d rows | columns: %s", len(df), list(df.columns))
-    text_col  = _detect_text_col(df)
-    star_col  = _detect_star_col(df)
+    text_col = _detect_text_col(df)
+    star_col = _detect_star_col(df)
     label_col = _detect_label_col(df)
     out = df[[text_col]].copy(); out.columns = ["text"]
     if label_col:
-        out["label"]        = df[label_col].apply(normalize_label)
+        out["label"] = df[label_col].apply(normalize_label)
         out["label_source"] = "weak_stars"
     elif star_col:
-        out["label"]        = df[star_col].apply(star_to_label)
+        out["label"] = df[star_col].apply(star_to_label)
         out["label_source"] = "weak_stars"
     else:
-        out["label"]        = out["text"].apply(lexicon_label)
+        out["label"] = out["text"].apply(lexicon_label)
         out["label_source"] = "weak_lexicon"
     out["source"] = "appstore_scrape"
     return out[["text", "label", "source", "label_source"]]
@@ -244,13 +244,13 @@ def load_reddit() -> pd.DataFrame:
     log.info("Loading reddit_gulf.csv...")
     path = RAW / "reddit_gulf.csv"
     if not path.exists():
-        log.warning("  NOT FOUND"); return pd.DataFrame()
+        log.warning("NOT FOUND"); return pd.DataFrame()
     df = pd.read_csv(path, encoding="utf-8-sig")
-    log.info("  %d rows | columns: %s", len(df), list(df.columns))
+    log.info("%d rows | columns: %s", len(df), list(df.columns))
     text_col = _detect_text_col(df)
     out = df[[text_col]].copy(); out.columns = ["text"]
-    out["label"]        = out["text"].apply(lexicon_label)
-    out["source"]       = "reddit_gulf"
+    out["label"] = out["text"].apply(lexicon_label)
+    out["source"] = "reddit_gulf"
     out["label_source"] = "weak_lexicon"
     return out[["text", "label", "source", "label_source"]]
 
@@ -259,13 +259,13 @@ def load_youtube() -> pd.DataFrame:
     log.info("Loading youtube_gulf.csv...")
     path = RAW / "youtube_gulf.csv"
     if not path.exists():
-        log.warning("  NOT FOUND"); return pd.DataFrame()
+        log.warning("NOT FOUND"); return pd.DataFrame()
     df = pd.read_csv(path, encoding="utf-8-sig")
     log.info("  %d rows | columns: %s", len(df), list(df.columns))
     text_col = _detect_text_col(df)
     out = df[[text_col]].copy(); out.columns = ["text"]
-    out["label"]        = out["text"].apply(lexicon_label)
-    out["source"]       = "youtube_scrape"
+    out["label"] = out["text"].apply(lexicon_label)
+    out["source"] = "youtube_scrape"
     out["label_source"] = "weak_lexicon_NEEDS_MANUAL"
     return out[["text", "label", "source", "label_source"]]
 
@@ -274,13 +274,13 @@ def load_are_cstd(filename: str, source_tag: str) -> pd.DataFrame:
     log.info("Loading %s...", filename)
     path = RAW / filename
     if not path.exists():
-        log.warning("  NOT FOUND"); return pd.DataFrame()
+        log.warning("NOT FOUND"); return pd.DataFrame()
     with open(path, encoding="utf-8", errors="replace") as f:
         lines = [l.strip() for l in f if l.strip()]
     log.info("  %d lines", len(lines))
     out = pd.DataFrame({"text": lines})
-    out["label"]        = out["text"].apply(lexicon_label)
-    out["source"]       = source_tag
+    out["label"] = out["text"].apply(lexicon_label)
+    out["source"] = source_tag
     out["label_source"] = "weak_lexicon_synthetic"
     return out[["text", "label", "source", "label_source"]]
 
@@ -315,16 +315,16 @@ def build_unified_raw():
     log.info("Merged: %d rows", len(df))
 
     # Minimal validation — only drop completely empty rows and unrecognized labels
-    df["text"]  = df["text"].astype(str).str.strip()
-    df          = df[df["text"].str.len() > 3]       # drop near-empty
-    df          = df[df["text"] != "nan"]
-    df          = df[df["label"].notna()]
-    df          = df[df["label"] != "None"]
+    df["text"] = df["text"].astype(str).str.strip()
+    df = df[df["text"].str.len() > 3]       # drop near-empty
+    df = df[df["text"] != "nan"]
+    df = df[df["label"].notna()]
+    df = df[df["label"] != "None"]
 
     # Drop pure English (not relevant to Arabic-English CS task)
     has_arabic  = df["text"].str.contains(r"[\u0600-\u06FF]", regex=True, na=False)
     has_english = df["text"].str.contains(r"[a-zA-Z]{2,}", regex=True, na=False)
-    df          = df[has_arabic | has_english]
+    df = df[has_arabic | has_english]
 
     # Deduplicate on raw text
     before = len(df)
@@ -334,10 +334,10 @@ def build_unified_raw():
     # Shuffle
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-    log.info("\n  SUMMARY")
-    log.info("  Total rows    : %d", len(df))
-    log.info("  Label counts  :\n%s", df["label"].value_counts().to_string())
-    log.info("  Source counts :\n%s", df["source"].value_counts().to_string())
+    log.info("\nSUMMARY")
+    log.info("Total rows : %d", len(df))
+    log.info("Label counts :\n%s", df["label"].value_counts().to_string())
+    log.info("Source counts :\n%s", df["source"].value_counts().to_string())
 
     out_path = PROCESSED / "unified_raw.csv"
     df.to_csv(out_path, index=False, encoding="utf-8-sig")

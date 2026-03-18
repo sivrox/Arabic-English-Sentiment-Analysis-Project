@@ -46,7 +46,7 @@ log = logging.getLogger(__name__)
 # Using -1/0/1 would crash PyTorch because -1 is an invalid class index.
 # ─────────────────────────────────────────────────────────────────────────────
 
-LABEL_MAP   = {"negative": 0, "neutral": 1, "positive": 2}
+LABEL_MAP = {"negative": 0, "neutral": 1, "positive": 2}
 ID_TO_LABEL = {0: "negative", 1: "neutral", 2: "positive"}
 
 
@@ -310,9 +310,9 @@ def assign_splits(df: pd.DataFrame, seed: int = 42) -> pd.DataFrame:
     remaining = df[df["split"].isna()].index.tolist()
     n = len(remaining)
     t1, t2 = int(n * 0.80), int(n * 0.90)
-    df.loc[remaining[:t1],    "split"] = "train"
-    df.loc[remaining[t1:t2],  "split"] = "val"
-    df.loc[remaining[t2:],    "split"] = "test"
+    df.loc[remaining[:t1], "split"] = "train"
+    df.loc[remaining[t1:t2], "split"] = "val"
+    df.loc[remaining[t2:], "split"] = "test"
 
     return df
 
@@ -347,8 +347,8 @@ class ArabicSentimentDataset(Dataset):
 
     def __init__(
         self,
-        texts:      list,
-        labels:     list,
+        texts: list,
+        labels: list,
         tokenizer,
         max_length: int = 128,
     ):
@@ -367,9 +367,9 @@ class ArabicSentimentDataset(Dataset):
             max_length=max_length,
             return_tensors="pt",      # return as PyTorch tensors directly
         )
-        self.input_ids      = encoded["input_ids"]       # (n, max_length) int64 tensor
+        self.input_ids = encoded["input_ids"]       # (n, max_length) int64 tensor
         self.attention_mask = encoded["attention_mask"]  # (n, max_length) int64 tensor
-        self.labels         = torch.tensor(list(labels), dtype=torch.long)  # (n,) int64
+        self.labels = torch.tensor(list(labels), dtype=torch.long)  # (n,) int64
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -380,9 +380,9 @@ class ArabicSentimentDataset(Dataset):
         The DataLoader stacks these into batches automatically.
         """
         return {
-            "input_ids"     : self.input_ids[idx],       # (max_length,) tensor
+            "input_ids" : self.input_ids[idx],       # (max_length,) tensor
             "attention_mask": self.attention_mask[idx],   # (max_length,) tensor
-            "label"         : self.labels[idx],           # scalar tensor
+            "label" : self.labels[idx],           # scalar tensor
         }
 
 
@@ -444,8 +444,8 @@ def build_dataloaders(
         )
 
     log.info("=" * 55)
-    log.info("  SentimentGulf Preprocessing Pipeline")
-    log.info("  Tokenizer: %s", getattr(tokenizer, "name_or_path", "unknown"))
+    log.info("Preprocessing Pipeline...")
+    log.info("Tokenizer: %s", getattr(tokenizer, "name_or_path", "unknown"))
     log.info("=" * 55)
 
     # ── 1. Load ───────────────────────────────────────────────────────────────
@@ -462,14 +462,14 @@ def build_dataloaders(
     df["text_type"] = df["cleaned_text"].apply(classify_text_type)
     before = len(df)
     df = df[df["text_type"].isin(["code_switched", "pure_arabic"])]
-    log.info("  Dropped %d pure-English / other rows", before - len(df))
+    log.info("Dropped %d pure-English / other rows", before - len(df))
 
     # ── 6. Drop very short rows ───────────────────────────────────────────────
     before = len(df)
     df = df[df["cleaned_text"].str.len() >= 5]
-    log.info("  Dropped %d near-empty rows", before - len(df))
+    log.info("Dropped %d near-empty rows", before - len(df))
 
-    log.info("  Remaining: %d rows", len(df))
+    log.info("Remaining: %d rows", len(df))
 
     # ── 7. Assign splits ──────────────────────────────────────────────────────
     log.info("Step 7: Assigning splits...")
@@ -495,7 +495,7 @@ def build_dataloaders(
 
     # ── 9-12. Tokenize and build DataLoaders ──────────────────────────────────
     log.info("Steps 9-12: Tokenizing, padding, converting to tensors, building DataLoaders...")
-    log.info("  Max sequence length: %d tokens", max_length)
+    log.info("Max sequence length: %d tokens", max_length)
 
     for split_name, split_df in [("train", train_df), ("val", val_df), ("test", test_df)]:
         log.info("  %s: %d samples | labels: %s",
@@ -575,7 +575,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
     # ── Text demo ────────────────────────────────────────────────────────────
-    print("=== PREPROCESSING DEMO ===\n")
+    print("\nProcessed Data Sample:\n")
     test_cases = [
         "وايت كثييييير هههههههه الخدمة سيئة 😡",
         "أحسن تطبيق إستخدمته والله ❤ amazing app",
@@ -592,11 +592,11 @@ if __name__ == "__main__":
 
     # ── Save cleaned dataset ─────────────────────────────────────────────────
     # Determine data path — check common locations
-    ROOT = Path(__file__).resolve().parent
+    ROOT = Path(__file__).resolve().parent.parent
     possible_paths = [
-        ROOT / "datasets" / "processed" / "unified_raw.csv",
-        Path("datasets/processed/unified_raw.csv"),
-        Path("../datasets/processed/unified_raw.csv"),
+        ROOT / "preprocessing" / "datasets" / "processed" / "unified_raw.csv",
+        Path("preprocessing/datasets/processed/unified_raw.csv"),
+        Path("../preprocessing/datasets/processed/unified_raw.csv"),
     ]
 
     data_path = None
@@ -606,12 +606,10 @@ if __name__ == "__main__":
             break
 
     if data_path is None:
-        print("\n⚠  unified_raw.csv not found.")
-        print("   Run build_dataset.py first:")
-        print("   python preprocessing/build_dataset.py")
+        print("\nFile not found.")
         sys.exit(1)
 
-    print(f"\n=== BUILDING CLEANED DATASET ===")
+    print(f"\nCleaning dataset...")
     print(f"Input: {data_path}")
 
     df = get_cleaned_dataframe(data_path)
@@ -626,15 +624,15 @@ if __name__ == "__main__":
         out_path, index=False, encoding="utf-8-sig"
     )
 
-    print(f"\n✓ Saved: {out_path}")
-    print(f"  Total rows    : {len(df):,}")
-    print(f"\n  Label distribution:")
+    print(f"\nSaved: {out_path}")
+    print(f"Total rows : {len(df):,}")
+    print(f"\nLabel distribution:")
     print(df["label"].value_counts().to_string())
-    print(f"\n  Text type distribution:")
+    print(f"\nText type distribution:")
     print(df["text_type"].value_counts().to_string())
-    print(f"\n  Split distribution:")
+    print(f"\nSplit distribution:")
     print(df["split"].value_counts().to_string())
-    print(f"\n  Sample cleaned rows (code-switched):")
+    print(f"\nSample cleaned rows (code-switched):")
     cs = df[df["text_type"] == "code_switched"].sample(
         min(5, len(df[df["text_type"] == "code_switched"])), random_state=42
     )
