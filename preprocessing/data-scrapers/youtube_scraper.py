@@ -60,7 +60,6 @@ def get_comments(video_id, max_comments=200):
                     "source": "youtube"
                 })
             
-            # get next page if exists
             if "nextPageToken" in response and len(comments) < max_comments:
                 response = youtube.commentThreads().list(
                     part="snippet",

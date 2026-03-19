@@ -96,7 +96,6 @@ def verify_lora_correctness(
             backward populates LoRA grads only.
     """
     model = model.to(device)
-    # Get a small batch
     dummy = tokenizer(
         ["hello world", "مرحبا"],
         padding=True,
@@ -109,11 +108,9 @@ def verify_lora_correctness(
     if attention_mask is not None:
         attention_mask = attention_mask.to(device)
     model.eval()
-    # Check requires_grad
     frozen_params = [n for n, p in model.named_parameters() if not p.requires_grad]
     trainable_params = [n for n, p in model.named_parameters() if p.requires_grad]
     assert len(trainable_params) > 0, "No trainable (LoRA) parameters found"
-    # Forward
     if hasattr(model, "forward") and "input_ids" in str(model.forward.__code__.co_varnames):
         try:
             out = model(input_ids=input_ids, attention_mask=attention_mask)
@@ -124,7 +121,6 @@ def verify_lora_correctness(
     logits = out.get("logits") if isinstance(out, dict) else getattr(out, "logits", None)
     assert logits is not None, "Model must return logits"
     assert logits.shape[0] == input_ids.shape[0], "Batch size mismatch"
-    # Backward
     model.train()
     loss = logits.sum()
     loss.backward()

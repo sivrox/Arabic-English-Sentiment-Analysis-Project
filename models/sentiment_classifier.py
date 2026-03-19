@@ -1,8 +1,3 @@
-"""
-Sentiment classifier wrapping any HuggingFace encoder.
-Works with XLM-RoBERTa and MARBERT for 3-class sentiment.
-"""
-
 from typing import Any, Optional
 
 import torch

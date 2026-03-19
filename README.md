@@ -16,26 +16,35 @@ Production-quality research project: **3-class sentiment analysis** (Positive / 
 ```
 configs/config.yaml
 preprocessing/
-  build_dataset.py   (existing)
-  arabic_normalizer.py
-  back_translation.py
+  preprocessor.py        (cleaning + DataLoader pipeline)
+  build-dataset.py       (merge raw sources into unified_raw.csv)
+  back_translation.py    (data augmentation via AR→EN→AR)
+  data-scrapers/
+    appstore_scraper.py
+    reddit_scraper.py
+    youtube_scraper.py
+    code-swtiched-per.py
+  datasets/
+    lexicon/             (AraSenti lexicon for weak labeling)
+    raw/                 (source datasets)
+    processed/           (cleaned datasets)
 models/
   sentiment_classifier.py
-  lora/              (LoRA from scratch, no PEFT)
-training/
-  dataset_loader.py
-  trainer_pytorch.py
-  callbacks.py
-  optimizers.py
+  lora/                  (LoRA from scratch, no PEFT)
+    lora_layer.py
+    lora_model.py
+    lora_utils.py
 evaluation/
-  standard_metrics.py   (Accuracy, Macro-F1, BLEU, per-class F1)
-  css_metric.py         (Code-Switch Sensitivity — cultural metric)
+  standard_metrics.py    (Accuracy, Macro-F1, BLEU, per-class F1)
+  css_metric.py          (Code-Switch Sensitivity — cultural metric)
+  css_evaluation.ipynb
 notebooks/
   01_pytorch_training.ipynb
   02_huggingface_training.ipynb
+peft_implementation.py   (standalone LoRA — used by notebooks)
 deployment/
   app.py
-  model_loader.py
+  api_model_loader.py
   Dockerfile
   docker-compose.yml
   requirements.txt
@@ -65,7 +74,7 @@ Run from project root so that `preprocessing`, `models`, `training`, `evaluation
 ## API (FastAPI)
 
 ```bash
-uvicorn deployment.app:app --reload --host 0.0.0.0 --port 8000
+cd deployment && uvicorn app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 - `POST /predict` — single text  

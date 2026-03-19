@@ -310,7 +310,6 @@ def build_unified_raw():
     ]
     frames = [f for f in frames if not f.empty]
 
-    # Merge
     df = pd.concat(frames, ignore_index=True)
     log.info("Merged: %d rows", len(df))
 
@@ -331,7 +330,6 @@ def build_unified_raw():
     df.drop_duplicates(subset="text", inplace=True)
     log.info("Deduplication removed: %d rows", before - len(df))
 
-    # Shuffle
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
     log.info("\nSUMMARY")

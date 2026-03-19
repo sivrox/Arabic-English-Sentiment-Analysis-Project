@@ -41,7 +41,7 @@ for app_id, app_name in UAE_APPS.items():
                 lang=lang_code,
                 country="ae",       # UAE store specifically
                 sort=Sort.NEWEST,
-                count=1000          # increased from 500
+                count=1000
             )
             for r in result:
                 if not r["content"]:
@@ -61,12 +61,10 @@ for app_id, app_name in UAE_APPS.items():
 df = pd.DataFrame(all_reviews)
 df.drop_duplicates(subset="text", inplace=True)
 
-# breakdown
 print("\n=== Text Type Distribution ===")
 print(df["text_type"].value_counts())
 print(f"\nTotal: {len(df)}")
 
-# save all — but flag the type
 df.to_csv("data/raw/appstore.csv", index=False, encoding="utf-8-sig")
 
 # save code-switched specifically

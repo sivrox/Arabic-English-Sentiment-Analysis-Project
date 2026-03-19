@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import json; nb = json.load\\(open\\(''notebooks/01_pytorch_training.ipynb''\\)\\); print\\(f''Cells: {len\\(nb[\"\"cells\"\"]\\)}''\\); print\\([c.get\\(''source'', ['''']\\)[0][:80] if c.get\\(''source''\\) else ''empty'' for c in nb[''cells''][:10]]\\)\")",
+      "Bash(python -c \"import models.sentiment_classifier; import models.lora.lora_model; import preprocessing.build-dataset\")",
+      "Bash(python -c \":*)",
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(grep -r 'from preprocessing import' . --include=*.py)",
+      "Bash(find . -type f -name *.py -o -name *.ipynb -o -name *.yaml -o -name *.csv -o -name *.txt)"
+    ]
+  }
+}
