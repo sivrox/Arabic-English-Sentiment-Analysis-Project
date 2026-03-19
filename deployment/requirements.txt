@@ -2,7 +2,7 @@ torch==2.2.0
 transformers==4.39.0
 peft==0.10.0
 datasets==2.18.0
-scikit-learn==1.4.1
+scikit-learn>=1.4.2
 pandas==2.2.1
 numpy==1.26.4
 fastapi==0.110.0
