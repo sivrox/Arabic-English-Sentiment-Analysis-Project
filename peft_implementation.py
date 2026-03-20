@@ -89,7 +89,7 @@ def count_parameters(model):
 #Verify LoRA Implementation
 
 if __name__ == "__main__":
-    print("Testing LoRA implementation...\n")
+    print("\nTesting LoRA implementation...\n")
 
     # Small test model with the same structure as a transformer attention block
     class small_model(nn.Module):
@@ -119,5 +119,4 @@ if __name__ == "__main__":
     # Gradient check — only LoRA params should receive gradients
     out.sum().backward()
     grads = [n for n, p in model.named_parameters() if p.requires_grad and p.grad is not None]
-    print(f"Parameters with gradients: {grads}")
-    print("\nTest passed.")
+    print(f"Parameters with gradients: {grads}\n")
