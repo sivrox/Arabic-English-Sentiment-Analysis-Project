@@ -1,0 +1,3 @@
+model,pipeline,test_macro_f1,test_accuracy,trainable_params,best_val_f1
+MARBERT FFT,PyTorch,0.8837,0.9005,162843651,0.8923
+MARBERT LoRA,PyTorch,0.8547,0.8719,297219,0.8653
