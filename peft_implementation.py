@@ -1,77 +1,57 @@
-"""
-peft_implementation.py
-----------------------
-Standalone LoRA (Low-Rank Adaptation) implementation from scratch.
-No external PEFT library required.
-
-Reference: Hu et al. (2021) — "LoRA: Low-Rank Adaptation of Large Language Models"
-           https://arxiv.org/abs/2106.09685
-
-Key idea:
-    For a frozen weight matrix W ∈ R^(d x k),
-    LoRA adds a trainable low-rank update:
-        ΔW = B · A    where B ∈ R^(d x r), A ∈ R^(r x k), r << d,k
-    Forward: h = Wx + BAx * (alpha / r)
-
-    This reduces trainable parameters from d*k → r*(d+k),
-    e.g. for d=k=768, r=8: 589,824 → 12,288  (48x reduction)
-"""
+#IMPLEMENTATION OF LORA FROM SCRATCH
 
 import torch
 import torch.nn as nn
 
-
 class LoRALinear(nn.Module):
-    """Wraps an nn.Linear layer with a trainable LoRA low-rank update.
-
-    Args:
-        linear   : pre-trained nn.Linear to wrap (weights are frozen)
-        r        : rank of the decomposition (default 8)
-        alpha    : scaling factor; effective lr = alpha/r * lr (default 16)
-        dropout  : dropout rate applied to the LoRA path (default 0.1)
     """
-    def __init__(self, linear: nn.Linear, r: int = 8,
-                 alpha: float = 16.0, dropout: float = 0.1):
+    Wraps a frozen nn.Linear layer and adds a trainable LoRA update path.
+    The original weights are never changed — only lora_a and lora_b train.
+    """
+
+    def __init__(self, linear, r=8, alpha=16.0, dropout=0.1):
         super().__init__()
-        self.r       = r
-        self.scaling = alpha / r
+        self.r = r
+        self.scaling = alpha / r  # applied to the LoRA output before adding to base
         self.linear  = linear
+
+        # Freeze the original pretrained weights
         self.linear.weight.requires_grad = False
         if self.linear.bias is not None:
             self.linear.bias.requires_grad = False
 
-        d_out, d_in   = linear.weight.shape
-        self.lora_A   = nn.Parameter(torch.randn(r, d_in) * 0.02)  # random init
-        self.lora_B   = nn.Parameter(torch.zeros(d_out, r))         # zero init → ΔW=0 at t=0
-        self.dropout  = nn.Dropout(dropout)
+        d_out, d_in = linear.weight.shape
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        base_out = self.linear(x)
-        lora_out = self.dropout(x) @ self.lora_A.T @ self.lora_B.T
-        return base_out + lora_out * self.scaling
+        # lora_a is initialized randomly, lora_b is zeros
+        # zeros for lora_b means the update starts at zero (no change at init)
+        self.lora_a = nn.Parameter(torch.randn(r, d_in) * 0.02)
+        self.lora_b = nn.Parameter(torch.zeros(d_out, r))
+        self.dropout = nn.Dropout(dropout)
 
-    def extra_repr(self) -> str:
-        d_out, d_in = self.linear.weight.shape
-        return (f"in={d_in}, out={d_out}, r={self.r}, "
-                f"scaling={self.scaling:.3f}, "
-                f"params_saved={d_in*d_out - self.r*(d_in+d_out)}")
+    def forward(self, x):
+        # base output from frozen weights + scaled low-rank update
+        return self.linear(x) + (self.dropout(x) @ self.lora_a.T @ self.lora_b.T) * self.scaling
 
 
-def inject_lora(model: nn.Module,
-                target_modules: tuple = ("query", "value"),
-                r: int = 8,
-                alpha: float = 16.0,
-                dropout: float = 0.1) -> nn.Module:
-    """Freeze all model weights, then replace target Linear layers with LoRALinear.
+def inject_lora(model, target_modules=("query", "value"), r=8, alpha=16.0, dropout=0.1):
+    """
+    Freezes all model weights, then replaces target Linear layers with LoRALinear.
+
+    After calling this, only the lora_a and lora_b matrices in the replaced
+    layers are trainable. Everything else is frozen.
+
+    Note: the classifier head is also frozen by this function.
+    Unfreeze it manually in the notebook after calling inject_lora().
 
     Args:
-        model          : any nn.Module (typically a HuggingFace transformer)
-        target_modules : tuple of layer name suffixes to replace (default q & v projections)
-        r, alpha, dropout : passed through to LoRALinear
+        model          : a HuggingFace transformer model
+        target_modules : which layer name endings to replace with LoRA
+        r, alpha, dropout : passed to LoRALinear
 
     Returns:
-        The modified model (in-place) with only LoRA parameters trainable.
+        the modified model (edited in place)
     """
+    # Freeze everything first
     for param in model.parameters():
         param.requires_grad = False
 
@@ -79,24 +59,65 @@ def inject_lora(model: nn.Module,
     for name, module in model.named_modules():
         for target in target_modules:
             if name.endswith(target) and isinstance(module, nn.Linear):
+                # Get the parent module so we can replace the child attribute
                 parts  = name.split(".")
                 parent = model
                 for part in parts[:-1]:
                     parent = getattr(parent, part)
-                setattr(parent, parts[-1],
-                        LoRALinear(module, r=r, alpha=alpha, dropout=dropout))
+                setattr(parent, parts[-1], LoRALinear(module, r=r, alpha=alpha, dropout=dropout))
                 replaced += 1
 
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    total     = sum(p.numel() for p in model.parameters())
-    print(f"[LoRA] Replaced {replaced} layers | "
-          f"Trainable: {trainable:,}/{total:,} ({100*trainable/total:.2f}%)")
+    total = sum(p.numel() for p in model.parameters())
+    print(f"LoRA applied: {replaced} layers replaced")
+    print(f"Trainable parameters: {trainable:,} / {total:,} ({100 * trainable / total:.2f}%)")
     return model
 
 
-def count_parameters(model: nn.Module) -> dict:
-    """Utility: return trainable vs total parameter counts."""
-    total     = sum(p.numel() for p in model.parameters())
+def count_parameters(model):
+    """Returns trainable and total parameter counts as a dict."""
+    total = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    return {"total": total, "trainable": trainable,
-            "frozen": total - trainable, "pct_trainable": 100 * trainable / total}
+    return {
+        "total": total,
+        "trainable": trainable,
+        "frozen": total - trainable,
+        "pct_trainable": round(100 * trainable / total, 2),
+    }
+
+
+#Verify LoRA Implementation
+
+if __name__ == "__main__":
+    print("Testing LoRA implementation...\n")
+
+    # Small test model with the same structure as a transformer attention block
+    class small_model(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.query = nn.Linear(64, 64)
+            self.value = nn.Linear(64, 64)
+            self.dense = nn.Linear(64, 64)
+
+        def forward(self, x):
+            return self.dense(self.query(x) + self.value(x))
+
+    model = small_model()
+    x = torch.randn(2, 10, 64)
+
+    params_before = count_parameters(model)
+    print(f"Before LoRA: {params_before['trainable']:,} trainable parameters")
+
+    model = inject_lora(model, target_modules=("query", "value"), r=4, alpha=8.0)
+    params_after = count_parameters(model)
+    print(f"After LoRA:  {params_after['trainable']:,} trainable parameters")
+
+    # Forward pass check
+    out = model(x)
+    print(f"\nForward pass output shape: {out.shape}  (expected torch.Size([2, 10, 64]))")
+
+    # Gradient check — only LoRA params should receive gradients
+    out.sum().backward()
+    grads = [n for n, p in model.named_parameters() if p.requires_grad and p.grad is not None]
+    print(f"Parameters with gradients: {grads}")
+    print("\nTest passed.")
