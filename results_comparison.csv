@@ -1,0 +1,5 @@
+Model,Strategy,Trainable Params,Test Macro F1,Best Val F1
+XLM-RoBERTa,Full FT,~278M (100%),0.8989,0.8942
+XLM-RoBERTa,LoRA Scratch,~1.4M (~0.5%),0.8912,0.8881
+MARBERT,Full FT,~163M (100%),0.9122,0.9055
+MARBERT,LoRA Scratch,~0.8M (~0.5%),0.9094,0.9057
