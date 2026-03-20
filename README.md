@@ -27,9 +27,9 @@ Open notebooks/ in Google Colab (T4 GPU required):
 ## Run Deployment
 ```bash
 cd deployment
-docker build -t sentimentgulf .
-docker run -p 8001:8000 -v "/path/to/models:/app/models" sentimentgulf
-# Open: http://localhost:8001
+docker build -t arabic-english-sentiment-analysis-api .
+docker run -p 8001:8000 -v "/path/to/models:/app/models" arabic-english-sentiment-analysis-api
+# Open: http://localhost:8001/docs
 ```
 
 
