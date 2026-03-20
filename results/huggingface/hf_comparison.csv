@@ -1,0 +1,3 @@
+model,strategy,framework,test_macro_f1,test_accuracy
+MARBERT,Full FT,HF Trainer,0.8828,0.8998
+MARBERT,LoRA,HF Trainer,0.856,0.8717
