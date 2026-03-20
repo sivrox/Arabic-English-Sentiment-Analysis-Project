@@ -7,7 +7,7 @@ def load_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dev = torch.device(device)
  
-    checkpoint = Path("models/best-model/best_marbert_fft")
+    checkpoint = Path("models/best_model/best_marbert_fft")
  
     print(f"Checking checkpoint: {checkpoint}")
     print(f"Exists: {checkpoint.exists()}")
