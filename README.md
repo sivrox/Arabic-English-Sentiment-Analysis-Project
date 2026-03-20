@@ -1,15 +1,37 @@
-# Arabic-English Sentiment Analysis (SentimentGulf)
+# Gulf Arabic-English Sentiment Analysis
 
 Production-quality research project: **3-class sentiment analysis** (Positive / Negative / Neutral) for **Gulf Arabic–English code-switched** social media text.
 
-## Overview
+Transfer learning for 3-class sentiment analysis on Gulf Arabic-English 
+code-switched social media text.
 
-- **Task**: 3-class sentiment classification  
-- **Language**: Gulf Arabic–English code-switched text (UAE and broader Gulf)  
-- **Models**: XLM-RoBERTa-base, MARBERTv2  
-- **Transfer strategies**: Full fine-tuning and **LoRA from scratch** (raw PyTorch)  
-- **Frameworks**: Raw PyTorch (manual loops) and HuggingFace Trainer  
-- **Deployment**: FastAPI + Docker  
+## Models
+- XLM-RoBERTa-base (Full Fine-Tuning + LoRA from Scratch)
+- MARBERTv2 (Full Fine-Tuning + LoRA from Scratch)
+
+## Results
+| Model | Strategy | Test Macro-F1 |
+|---|---|---|
+| XLM-RoBERTa | Full FT | 0.8989 |
+| XLM-RoBERTa | LoRA Scratch | 0.8912 |
+| MARBERT | Full FT | **0.9122** |
+| MARBERT | LoRA Scratch | 0.9094 |
+
+CSS Score (MARBERT Full FT): **0.6604** (Strong Arabic engagement)
+
+## Run Training
+Open notebooks/ in Google Colab (T4 GPU required):
+1. `01_pytorch_training.ipynb` — PyTorch raw training loop
+2. `02_huggingface_training.ipynb` — HuggingFace Trainer
+
+## Run Deployment
+```bash
+cd deployment
+docker build -t sentimentgulf .
+docker run -p 8001:8000 -v "/path/to/models:/app/models" sentimentgulf
+# Open: http://localhost:8001
+```
+
 
 ## Directory Structure
 
@@ -40,54 +62,3 @@ deployment/
   docker-compose.yml
   requirements.txt
 ```
-
-## Setup
-
-```bash
-pip install -r deployment/requirements.txt
-```
-
-Data: place `master_dataset.csv` under `data/processed/` (or use `preprocessing/data/processed/` and set paths in config/notebooks).
-
-## Training
-
-- **Notebook 01**: Raw PyTorch training (full fine-tuning and LoRA from scratch in `models/lora/`).  
-- **Notebook 02**: HuggingFace Trainer and PEFT LoRA.
-
-Run from project root so that `preprocessing`, `models`, `training`, `evaluation` are importable.
-
-## Evaluation
-
-- **Primary metric**: Macro-F1.  
-- **BLEU**: Included per project requirements (computed on label sequences for classification).  
-- **CSS (Code-Switch Sensitivity)**: Custom cultural metric measuring reliance on Arabic tokens.
-
-## API (FastAPI)
-
-```bash
-uvicorn deployment.app:app --reload --host 0.0.0.0 --port 8000
-```
-
-- `POST /predict` — single text  
-- `POST /batch_predict` — batch (max 32)  
-- `GET /health` — status  
-- `GET /examples` — 5 Gulf Arabic CS examples  
-- `GET /docs` — Swagger UI  
-
-## Docker
-
-```bash
-docker-compose -f deployment/docker-compose.yml up --build
-```
-
-## Model Selection (Section 4 Methodology)
-
-We use **XLM-RoBERTa-base** and **MARBERTv2** instead of the spec-suggested BLOOM, mT5/mBART, LaMini-FLAN-T5, AceGPT/Jais:
-
-- **XLM-RoBERTa**: Strong cross-lingual encoder for Arabic–English code-switching.  
-- **MARBERTv2**: Arabic-dialect model (1B Arabic tweets), better for Gulf dialect.  
-- AceGPT/Jais are decoder-only; MARBERTv2 is better suited for encoder-based sentiment.
-
-## License and Citation
-
-Use for CSCI316 research project. Cite dataset and model sources as required by your course.

@@ -16,16 +16,16 @@ from pydantic import BaseModel
 from api_model_loader import load_model
 
 # ── Globals ───────────────────────────────────────────────────────────────────
-_model       = None
-_tokenizer   = None
-_model_name  = "not_loaded"
-_device      = "cpu"
-_start_time  = None
+_model = None
+_tokenizer = None
+_model_name = "not_loaded"
+_device = "cpu"
+_start_time = None
 _total_preds = 0
 
 ID2LABEL = {0: "negative", 1: "neutral", 2: "positive"}
 ARABIC_RE = re.compile(r"[\u0600-\u06FF]")
-LATIN_RE  = re.compile(r"[a-zA-Z]")
+LATIN_RE = re.compile(r"[a-zA-Z]")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -64,8 +64,8 @@ def _text_type(text: str) -> str:
     has_ar = bool(ARABIC_RE.search(text))
     has_en = bool(LATIN_RE.search(text))
     if has_ar and has_en: return "code_switched"
-    if has_ar:            return "pure_arabic"
-    if has_en:            return "pure_english"
+    if has_ar: return "pure_arabic"
+    if has_en: return "pure_english"
     return "other"
 
 def _arabic_ratio(text: str) -> float:
@@ -87,14 +87,14 @@ def _predict(text: str) -> dict:
     pred_id = int(torch.tensor(probs).argmax().item())
     _total_preds += 1
     return {
-        "sentiment"     : ID2LABEL[pred_id],
-        "confidence"    : round(probs[pred_id], 4),
+        "sentiment" : ID2LABEL[pred_id],
+        "confidence" : round(probs[pred_id], 4),
         "probabilities" : {ID2LABEL[i]: round(p, 4) for i, p in enumerate(probs)},
-        "arabic_ratio"  : _arabic_ratio(text),
-        "text_type"     : _text_type(text),
-        "cleaned_text"  : text,
-        "model_used"    : _model_name,
-        "inference_ms"  : round((time.perf_counter() - t0) * 1000, 2),
+        "arabic_ratio" : _arabic_ratio(text),
+        "text_type" : _text_type(text),
+        "cleaned_text" : text,
+        "model_used" : _model_name,
+        "inference_ms" : round((time.perf_counter() - t0) * 1000, 2),
     }
 
 
@@ -123,9 +123,9 @@ HTML_PAGE = """<!DOCTYPE html>
   .ex-btn:hover { background: #bee3f8; }
   #result { margin-top: 28px; display: none; }
   .sentiment-badge { display: inline-block; padding: 10px 24px; border-radius: 30px; font-size: 1.4rem; font-weight: 700; margin-bottom: 18px; }
-  .positive  { background: #c6f6d5; color: #22543d; }
-  .negative  { background: #fed7d7; color: #742a2a; }
-  .neutral   { background: #e2e8f0; color: #2d3748; }
+  .positive { background: #c6f6d5; color: #22543d; }
+  .negative { background: #fed7d7; color: #742a2a; }
+  .neutral { background: #e2e8f0; color: #2d3748; }
   .conf-bar-wrap { background: #e2e8f0; border-radius: 8px; height: 12px; margin-bottom: 6px; }
   .conf-bar { height: 12px; border-radius: 8px; transition: width 0.5s; }
   .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
