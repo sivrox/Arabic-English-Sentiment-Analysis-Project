@@ -1,0 +1,9 @@
+{
+  "model": "MARBERT Full Fine-Tuning",
+  "css_score": 0.6925,
+  "interpretation": "Strong Arabic engagement - model genuinely reads Arabic",
+  "n_samples_used": 355,
+  "n_skipped_no_arabic": 0,
+  "n_skipped_wrong": 126,
+  "n_skipped_low_conf": 19
+}
