@@ -28,7 +28,7 @@ Open notebooks/ in Google Colab (T4 GPU required):
 ```bash
 cd deployment
 docker build -t arabic-english-sentiment-analysis-api .
-docker run -p 8001:8000 -v "/path/to/models:/app/models" arabic-english-sentiment-analysis-api
+docker run -p 8001:8000 -v "models\best_model:/app/models/checkpoints" arabic-english-sentiment-analysis-api
 # Open: http://localhost:8001/docs
 ```
 
