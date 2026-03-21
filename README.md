@@ -22,9 +22,10 @@ Open in Google Colab (T4 GPU/A100 GPU required):
 
 1. `notebooks/pytorch_training_pipelinw.ipynb` — Raw PyTorch training loop, Full FT + LoRA from scratch
 2. `notebooks/huggingface_training_pipeline.ipynb` — HuggingFace Trainer, Full FT + LoRA (peft library)
-3. 
+
 Both notebooks save results to `results/` and checkpoints to Google Drive.
 Goggle Drive Link: https://drive.google.com/drive/folders/1DHzgJGJghjrOlE_yEFOC2RB1TXK0PO1A?usp=sharing
+
 ---
 
 ## Run Deployment
