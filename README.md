@@ -1,64 +1,133 @@
-# Gulf Arabic-English Sentiment Analysis
+# Gulf Arabic–English Sentiment Analysis
 
-Production-quality research project: **3-class sentiment analysis** (Positive / Negative / Neutral) for **Gulf Arabic–English code-switched** social media text.
+Transfer learning pipeline for 3-class sentiment analysis (Positive / Negative / Neutral)
+on Gulf Arabic–English code-switched social media text.
 
-Transfer learning for 3-class sentiment analysis on Gulf Arabic-English 
-code-switched social media text.
+Group Project | CSCI316 — Big Data Mining and Applications | University of Wollongong in Dubai
 
-## Models
-- XLM-RoBERTa-base (Full Fine-Tuning + LoRA from Scratch)
-- MARBERTv2 (Full Fine-Tuning + LoRA from Scratch)
+---
 
-## Results
-| Model | Strategy | Test Macro-F1 |
-|---|---|---|
-| XLM-RoBERTa | Full FT | 0.8989 |
-| XLM-RoBERTa | LoRA Scratch | 0.8912 |
-| MARBERT | Full FT | **0.9122** |
-| MARBERT | LoRA Scratch | 0.9094 |
+## Model
 
-CSS Score (MARBERT Full FT): **0.6604** (Strong Arabic engagement)
+**MARBERTv2** (UBC-NLP/MARBERTv2)
+- Encoder-only transformer pretrained on 1 billion Arabic dialect tweets
+- 163M parameters, 91,359 Arabic token IDs in vocabulary
+- Two transfer strategies: Full Fine-Tuning and LoRA from Scratch
+
+---
 
 ## Run Training
-Open notebooks/ in Google Colab (T4 GPU required):
-1. `01_pytorch_training.ipynb` — PyTorch raw training loop
-2. `02_huggingface_training.ipynb` — HuggingFace Trainer
+
+Open in Google Colab (T4 GPU/A100 GPU required):
+
+1. `notebooks/pytorch_training_pipelinw.ipynb` — Raw PyTorch training loop, Full FT + LoRA from scratch
+2. `notebooks/huggingface_training_pipeline.ipynb` — HuggingFace Trainer, Full FT + LoRA (peft library)
+3. 
+Both notebooks save results to `results/` and checkpoints to Google Drive.
+Goggle Drive Link: https://drive.google.com/drive/folders/1DHzgJGJghjrOlE_yEFOC2RB1TXK0PO1A?usp=sharing
+---
 
 ## Run Deployment
 ```bash
+# Place fine-tuned checkpoint at deployment/models/best_model/best_marbert_fft/
+
 cd deployment
 docker build -t arabic-english-sentiment-analysis-api .
-docker run -p 8001:8000 -v "models\best_model:/app/models/checkpoints" arabic-english-sentiment-analysis-api
-# Open: http://localhost:8001/docs
+docker run -p 8001:8000 arabic-english-sentiment-analysis-api
+
+# Open: http://localhost:8000/docs
 ```
 
+API Endpoints:
+- `POST /predict` — Single text prediction
+- `POST /batch_predict` — Batch prediction (max 32 texts)
+- `GET /health` — Service status and model info
+- `GET /examples` — Sample Gulf Arabic–English inputs
+- `GET /docs` — Interactive Swagger UI
 
-## Directory Structure
+---
 
+## Project Structure
 ```
-configs/config.yaml
+peft_implementation.py          #LoRA from scratch
+
 preprocessing/
-  build_dataset.py   (existing)
-  arabic_normalizer.py
-  back_translation.py
-models/
-  sentiment_classifier.py
-  lora/              (LoRA from scratch, no PEFT)
-training/
-  dataset_loader.py
-  trainer_pytorch.py
-  callbacks.py
-  optimizers.py
-evaluation/
-  standard_metrics.py   (Accuracy, Macro-F1, BLEU, per-class F1)
-  css_metric.py         (Code-Switch Sensitivity — cultural metric)
+  data-scrapers                 #Online data scraping scrpits
+  build_dataset.py              #Merges raw sources into unified_raw.csv
+  preprocessor.py               #Full cleaning pipeline and DataLoader construction
+  datasets/
+    raw/                        #Source files
+    lexicon/
+    processed/
+      unified_raw.csv           #213,255 rows combined
+      cleaned_dataset.csv       #Preprocessed Dataset for training
+
 notebooks/
-  01_pytorch_training.ipynb
-  02_huggingface_training.ipynb
+  pytorch_training_pipeline.ipynb     #PyTorch pipeline — Full FT + LoRA Scratch
+  huggingface_training_pipeline.ipynb #HuggingFace pipeline — Full FT + LoRA (peft)
+
+evaluation/
+  css_evaluation.ipynb          #CSS cultural metric evaluation
+
 deployment/
-  app.py
-  model_loader.py
+  app.py                        #FastAPI inference server
+  api_model_loader.py           #Model loading with checkpoint fallback
   Dockerfile
   docker-compose.yml
   requirements.txt
+
+results/
+  pytorch/                      #PyTorch training results and plots
+  huggingface/                  #HuggingFace training results and plots
+  cross_framework_comparison.csv
+  css_results.json
 ```
+
+---
+
+## Dataset
+
+Built from 8 sources — no single Gulf Arabic–English sentiment dataset exists:
+
+| Source | Type | Labeling |
+|---|---|---|
+| arbml Arabic Sentiment Twitter Corpus | Pure Arabic | Manual |
+| ASTD Arabic Sentiment Tweets | Pure Arabic | Manual |
+| Company Reviews (Kaggle) | Mixed | Star ratings |
+| MagedSaeed CS Text (HuggingFace) | Code-switched | AraSenti lexicon |
+| ArE-CSTD (SDAIA/Kaggle) | Synthetic code-switched | AraSenti lexicon |
+| App store reviews (UAE) | Mixed | Star ratings |
+| YouTube comments (Gulf) | Mixed | Weak labels (gold test only) |
+
+**213,255 total samples** | 76.5% code-switched | 23.5% pure Arabic
+
+---
+
+## CSS — Code-Switch Sensitivity Score
+
+A custom cultural metric measuring whether the model genuinely reads Arabic tokens
+or relies on English keywords. Computed by masking Arabic tokens and measuring
+the drop in model confidence.
+
+- CSS > 0.25 → Strong Arabic engagement
+- CSS 0.10–0.25 → Moderate
+- CSS < 0.10 → Weak (English-dependent)
+
+**MARBERT Full FT CSS: 0.6925** (355 qualifying code-switched test samples)
+
+---
+
+## Requirements
+
+Training: Google Colab Pro, T4 GPU/A100 GPU, PyTorch 2.2.0, Transformers 4.41.0, peft 0.10.0
+
+Deployment: Docker, Python 3.11, FastAPI, Uvicorn
+
+---
+
+## References
+
+1. Abdul-Mageed et al. (2021). ARBERT and MARBERT. ACL 2021.
+2. Hu et al. (2022). LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022.
+3. Al-Twairesh et al. (2016). AraSenTi. ACL 2016.
+4. SDAIA (2024). ArE-CSTD. Kaggle.
