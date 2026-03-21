@@ -1,11 +1,9 @@
-# SentimentGulf — Arabic-English Sentiment Analysis
+#Arabic-English Sentiment Analysis
 # 3-class: negative (0), neutral (1), positive (2)
 # Gulf Arabic–English code-switched social media text
 
 data:
-  master_dataset_path: "data/processed/master_dataset.csv"
-  code_switched_path: "data/processed/code_switched_only.csv"
-  gold_test_path: "data/processed/gold_test_set.csv"
+  master_dataset_path: "data/processed/cleaned_dataset.csv"
   label_map:
     negative: 0
     neutral: 1
@@ -19,11 +17,6 @@ data:
   max_sequence_length: 128
 
 models:
-  xlm_roberta:
-    hf_name: "xlm-roberta-base"
-    hidden_size: 768
-    num_hidden_layers: 12
-    dropout: 0.3
   marbert:
     hf_name: "UBC-NLP/MARBERTv2"
     hidden_size: 768
@@ -32,7 +25,7 @@ models:
 
 training:
   batch_size: 16
-  max_epochs: 10
+  max_epochs: 3
   early_stopping_patience: 3
   gradient_clip_max_norm: 1.0
   warmup_ratio: 0.1
@@ -58,10 +51,10 @@ evaluation:
   primary_metric: "macro_f1"
   compute_bleu: true
   css_confidence_threshold: 0.80
-  css_n_samples: 150
+  css_n_samples: 355
 
 deployment:
-  port: 8000
+  port: 8001
   max_batch_size: 32
   max_text_length: 512
   best_model_path: "models/checkpoints/best_model"
